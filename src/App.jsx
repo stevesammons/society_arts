@@ -1,22 +1,44 @@
-import { useState } from "react";
-import { HumeProvider, useVoice } from "@humeai/voice-react";
+import { useMemo, useState } from "react";
+import * as Hume from "@humeai/voice-react";
 import { getHumeAccessToken } from "./humeAuth";
 
-function VoiceDemo() {
+/**
+ * Resolve provider/hook names across different @humeai/voice-react versions.
+ */
+function useHumeBindings() {
+  // pick whichever provider exists in this build of the library
+  const Provider =
+    Hume.VoiceProvider ||
+    Hume.HumeProvider ||
+    Hume.Provider ||
+    Hume.EVIProvider;
+
+  // pick whichever hook exists
+  const useVoice =
+    Hume.useVoice ||
+    Hume.useEVI ||
+    Hume.useHume ||
+    Hume.useHumeClient;
+
+  return useMemo(() => ({ Provider, useVoice }), [Provider, useVoice]);
+}
+
+function VoiceDemo({ useVoice }) {
   const {
     connect,
     disconnect,
-    isConnected,
-    isRecording,
-    startRecording,
-    stopRecording,
+    isConnected = false,
+    isRecording = false,
+    startRecording = () => {},
+    stopRecording = () => {},
     messages = [],
-  } = useVoice();
+  } = (useVoice ? useVoice() : {});
 
   const [status, setStatus] = useState("Ready");
 
   async function handleConnect() {
     try {
+      if (!connect) throw new Error("Voice connect() not available");
       setStatus("Getting token…");
       const token = await getHumeAccessToken();
 
@@ -24,11 +46,21 @@ function VoiceDemo() {
       const configId = import.meta.env.VITE_HUME_CONFIG_ID || undefined;
 
       await connect({ accessToken: token, configId });
-
       setStatus("Connected");
     } catch (e) {
       setStatus("Connect error: " + (e?.message || String(e)));
     }
+  }
+
+  if (!useVoice) {
+    return (
+      <div style={{ fontFamily: "system-ui", padding: 24 }}>
+        <h1>Hume + Netlify Starter</h1>
+        <p style={{ color: "crimson" }}>
+          Couldn’t find a voice hook in <code>@humeai/voice-react</code>. Try upgrading the package.
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -50,29 +82,4 @@ function VoiceDemo() {
         isRecording ? (
           <button onClick={stopRecording} style={{ padding: "8px 12px" }}>Stop talking</button>
         ) : (
-          <button onClick={startRecording} style={{ padding: "8px 12px" }}>Hold to talk</button>
-        )
-      ) : null}
-
-      <div style={{ marginTop: 16 }}>
-        <strong>Messages</strong>
-        <ul>
-          {(messages || []).slice(-8).map((m, i) => {
-            const parts = Array.isArray(m?.content) ? m.content : [];
-            const text = parts.map((c) => c?.text ?? "").filter(Boolean).join(" ");
-            return <li key={i}>{m?.role ?? "system"}: {text}</li>;
-          })}
-        </ul>
-      </div>
-    </div>
-  );
-}
-
-export default function App() {
-  // IMPORTANT: Voice hooks must be children of HumeProvider
-  return (
-    <HumeProvider>
-      <VoiceDemo />
-    </HumeProvider>
-  );
-}
+          <button onClick={startR
