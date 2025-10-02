@@ -1,9 +1,18 @@
 import { useState } from "react";
-import { HumeProvider, useEVI } from "@humeai/voice-react";
+import { VoiceProvider, useVoice } from "@humeai/voice-react";
 import { getHumeAccessToken } from "./humeAuth";
 
-function EviDemo() {
-  const { connect, disconnect, isConnected, isRecording, startRecording, stopRecording, messages } = useEVI();
+function VoiceDemo() {
+  const {
+    connect,
+    disconnect,
+    isConnected,
+    isRecording,
+    startRecording,
+    stopRecording,
+    messages,
+  } = useVoice();
+
   const [status, setStatus] = useState("Ready");
 
   async function handleConnect() {
@@ -14,7 +23,7 @@ function EviDemo() {
       setStatus("Connecting…");
       const configId = import.meta.env.VITE_HUME_CONFIG_ID || undefined;
 
-      // Hand the short-lived token directly to connect()
+      // Pass the short-lived token directly to connect()
       await connect({ accessToken: token, configId });
 
       setStatus("Connected");
@@ -50,9 +59,7 @@ function EviDemo() {
         <strong>Messages</strong>
         <ul>
           {messages.slice(-8).map((m, i) => (
-            <li key={i}>
-              {m.role}: {m.content?.map((c) => c.text).join(" ")}
-            </li>
+            <li key={i}>{m.role}: {m.content?.map(c => c.text).join(" ")}</li>
           ))}
         </ul>
       </div>
@@ -62,8 +69,8 @@ function EviDemo() {
 
 export default function App() {
   return (
-    <HumeProvider>
-      <EviDemo />
-    </HumeProvider>
+    <VoiceProvider>
+      <VoiceDemo />
+    </VoiceProvider>
   );
 }
