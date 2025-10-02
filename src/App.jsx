@@ -10,7 +10,7 @@ function VoiceDemo() {
     isRecording,
     startRecording,
     stopRecording,
-    messages,
+    messages = [],
   } = useVoice();
 
   const [status, setStatus] = useState("Ready");
@@ -23,12 +23,11 @@ function VoiceDemo() {
       setStatus("Connecting…");
       const configId = import.meta.env.VITE_HUME_CONFIG_ID || undefined;
 
-      // Pass the short-lived token directly to connect()
       await connect({ accessToken: token, configId });
 
       setStatus("Connected");
     } catch (e) {
-      setStatus("Connect error: " + e.message);
+      setStatus("Connect error: " + (e?.message || String(e)));
     }
   }
 
@@ -58,9 +57,11 @@ function VoiceDemo() {
       <div style={{ marginTop: 16 }}>
         <strong>Messages</strong>
         <ul>
-          {messages.slice(-8).map((m, i) => (
-            <li key={i}>{m.role}: {m.content?.map(c => c.text).join(" ")}</li>
-          ))}
+          {(messages || []).slice(-8).map((m, i) => {
+            const parts = Array.isArray(m?.content) ? m.content : [];
+            const text = parts.map((c) => c?.text ?? "").filter(Boolean).join(" ");
+            return <li key={i}>{m?.role ?? "system"}: {text}</li>;
+          })}
         </ul>
       </div>
     </div>
