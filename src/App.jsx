@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { VoiceProvider, useVoice } from "@humeai/voice-react";
+import { HumeProvider, useVoice } from "@humeai/voice-react";
 import { getHumeAccessToken } from "./humeAuth";
 
 function VoiceDemo() {
@@ -69,9 +69,10 @@ function VoiceDemo() {
 }
 
 export default function App() {
+  // IMPORTANT: Voice hooks must be children of HumeProvider
   return (
-    <VoiceProvider>
+    <HumeProvider>
       <VoiceDemo />
-    </VoiceProvider>
+    </HumeProvider>
   );
 }
