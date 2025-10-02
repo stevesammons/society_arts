@@ -4,16 +4,15 @@ import { getHumeAccessToken } from "./humeAuth";
 
 /**
  * Resolve provider/hook names across different @humeai/voice-react versions.
+ * This makes the app work even if the package exports changed names.
  */
 function useHumeBindings() {
-  // pick whichever provider exists in this build of the library
   const Provider =
     Hume.VoiceProvider ||
     Hume.HumeProvider ||
     Hume.Provider ||
     Hume.EVIProvider;
 
-  // pick whichever hook exists
   const useVoice =
     Hume.useVoice ||
     Hume.useEVI ||
@@ -32,7 +31,7 @@ function VoiceDemo({ useVoice }) {
     startRecording = () => {},
     stopRecording = () => {},
     messages = [],
-  } = (useVoice ? useVoice() : {});
+  } = useVoice ? useVoice() : {};
 
   const [status, setStatus] = useState("Ready");
 
@@ -80,6 +79,51 @@ function VoiceDemo({ useVoice }) {
 
       {isConnected ? (
         isRecording ? (
-          <button onClick={stopRecording} style={{ padding: "8px 12px" }}>Stop talking</button>
+          <button onClick={stopRecording} style={{ padding: "8px 12px" }}>
+            Stop talking
+          </button>
         ) : (
-          <button onClick={startR
+          <button onClick={startRecording} style={{ padding: "8px 12px" }}>
+            Hold to talk
+          </button>
+        )
+      ) : null}
+
+      <div style={{ marginTop: 16 }}>
+        <strong>Messages</strong>
+        <ul>
+          {(messages || []).slice(-8).map((m, i) => {
+            const parts = Array.isArray(m?.content) ? m.content : [];
+            const text = parts.map((c) => c?.text ?? "").filter(Boolean).join(" ");
+            return (
+              <li key={i}>
+                {m?.role ?? "system"}: {text}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  const { Provider, useVoice } = useHumeBindings();
+
+  if (!Provider) {
+    return (
+      <div style={{ fontFamily: "system-ui", padding: 24 }}>
+        <h1>Hume + Netlify Starter</h1>
+        <p style={{ color: "crimson" }}>
+          Couldn’t find a provider export in <code>@humeai/voice-react</code>. Try upgrading the package.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <Provider>
+      <VoiceDemo useVoice={useVoice} />
+    </Provider>
+  );
+}
